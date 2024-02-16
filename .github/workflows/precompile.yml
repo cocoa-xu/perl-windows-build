@@ -26,34 +26,21 @@ jobs:
         with:
           arch: ${{ matrix.pair.vcvarsall }}
 
-      - name: Download
-        shell: bash
-        run: |
-          PERL5_VERSION=${GITHUB_REF##*/v}
-          curl -fSL https://www.cpan.org/src/5.0/perl-${PERL5_VERSION}.tar.gz -o perl-${PERL5_VERSION}.tar.gz
-          tar -xzf perl-${PERL5_VERSION}.tar.gz
-
-      - name: Setup Perl
-        shell: bash
-        run: |
-          PERL5_VERSION=${GITHUB_REF##*/v}
-          cd perl-${PERL5_VERSION}/win32
-          sed -i 's/#CCTYPE		= MSVC143/CCTYPE		= MSVC143/' Makefile || true
-
       - name: Compile Perl
         run: |
           $ref = $env:GITHUB_REF
           $PERL5_VERSION=$ref.Replace('refs/tags/v','')
-          cd perl-${PERL5_VERSION}/win32
+          Invoke-WebRequest -Uri https://www.cpan.org/src/5.0/perl-${PERL5_VERSION}.tar.gz -OutFile perl-${PERL5_VERSION}.tar.gz
+          tar -xzf .\perl-${PERL5_VERSION}.tar.gz
+          cd perl-${PERL5_VERSION}\win32
+          (Get-Content .\Makefile).Replace("#CCTYPE`t`t= MSVC143", "CCTYPE`t`t= MSVC143") |  Set-Content .\Makefile
           nmake
           nmake install
 
       - name: Create tarball
-        shell: bash
         run: |
-          export ROOT_DIR=$(pwd)
-          mkdir -p "${ROOT_DIR}/artifacts"
-          tar -czf "${ROOT_DIR}/artifacts/perl-${{ matrix.pair.arch }}-windows-msvc.tar.gz" -C /c/perl .
+          New-Item -ItemType Directory -Path artifacts -Force
+          tar -czf ".\artifacts\perl-${{ matrix.pair.arch }}-windows-msvc.tar.gz" -C c:\perl .
 
       - uses: softprops/action-gh-release@v1
         with:
