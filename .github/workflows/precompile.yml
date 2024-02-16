@@ -42,7 +42,8 @@ jobs:
 
       - name: Compile Perl
         run: |
-          PERL5_VERSION=${GITHUB_REF##*/v}
+          $ref = $env:GITHUB_REF
+          $PERL5_VERSION=$ref.Replace('refs/tags/v','')
           cd perl-${PERL5_VERSION}/win32
           nmake
           nmake install
