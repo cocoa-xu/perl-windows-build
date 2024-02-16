@@ -1,0 +1,58 @@
+name: perl-windows
+
+on:
+  push:
+    tags:
+        - 'v*'
+
+jobs:
+  windows:
+    runs-on: windows-2019
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - pair:
+              runner: self-hosted-aarch64-windows-runner
+              arch: aarch64
+              vcvarsall: amd64_arm64
+          - pair:
+              runner: windows-2019
+              arch: x86_64
+              vcvarsall: x64
+
+    steps:
+      - uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: ${{ matrix.pair.vcvarsall }}
+
+      - name: Download
+        shell: bash
+        run: |
+          PERL5_VERSION=${GITHUB_REF##*/v}
+          curl -fSL https://www.cpan.org/src/5.0/perl-${PERL5_VERSION}.tar.gz -o perl-${PERL5_VERSION}.tar.gz
+          tar -xzf perl-${PERL5_VERSION}.tar.gz
+
+      - name: Setup Perl
+        shell: bash
+        run: |
+          cd perl-${PERL5_VERSION}/win32
+          sed -i 's/#CCTYPE		= MSVC143/CCTYPE		= MSVC143/' Makefile || true
+
+      - name: Compile Perl
+        run: |
+          cd perl-${PERL5_VERSION}/win32
+          nmake
+          nmake install
+
+      - name: Create tarball
+        shell: bash
+        run: |
+          export ROOT_DIR=$(pwd)
+          mkdir -p "${ROOT_DIR}/artifacts"
+          tar -czf "${ROOT_DIR}/artifacts/perl-${{ matrix.pair.arch }}-windows-msvc.tar.gz" -C /c/perl .
+
+      - uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            artifacts/perl-*.tar.gz
