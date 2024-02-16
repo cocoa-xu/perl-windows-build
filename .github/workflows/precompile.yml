@@ -13,7 +13,7 @@ jobs:
       matrix:
         include:
           - pair:
-              runner: self-hosted-aarch64-windows-runner
+              runner: self-hosted-aarch64-windows-msvc
               arch: aarch64
               vcvarsall: arm64
           - pair:
