@@ -36,11 +36,13 @@ jobs:
       - name: Setup Perl
         shell: bash
         run: |
+          PERL5_VERSION=${GITHUB_REF##*/v}
           cd perl-${PERL5_VERSION}/win32
           sed -i 's/#CCTYPE		= MSVC143/CCTYPE		= MSVC143/' Makefile || true
 
       - name: Compile Perl
         run: |
+          PERL5_VERSION=${GITHUB_REF##*/v}
           cd perl-${PERL5_VERSION}/win32
           nmake
           nmake install
