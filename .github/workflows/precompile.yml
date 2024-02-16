@@ -7,7 +7,7 @@ on:
 
 jobs:
   windows:
-    runs-on: windows-2019
+    runs-on: ${{ matrix.pair.runner }}
     strategy:
       fail-fast: false
       matrix:
@@ -15,7 +15,7 @@ jobs:
           - pair:
               runner: self-hosted-aarch64-windows-runner
               arch: aarch64
-              vcvarsall: amd64_arm64
+              vcvarsall: arm64
           - pair:
               runner: windows-2019
               arch: x86_64
