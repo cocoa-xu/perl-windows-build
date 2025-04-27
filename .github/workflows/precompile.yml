@@ -46,6 +46,7 @@ jobs:
     steps:
       - name: Build Check
         id: build-check
+        shell: bash
         run: |
           if [ "${{ github.event_name }}" = "push" ]; then
             echo "build=true" >> $GITHUB_OUTPUT
@@ -74,8 +75,7 @@ jobs:
       - name: Compile Perl
         if: steps.build-check.outputs.build == 'true'
         run: |
-          $ref = $env:GITHUB_REF
-          $PERL5_VERSION=$ref.Replace('refs/tags/v','')
+          $PERL5_VERSION="${{ steps.build-check.outputs.version }}"
           Invoke-WebRequest -Uri https://www.cpan.org/src/5.0/perl-${PERL5_VERSION}.tar.gz -OutFile perl-${PERL5_VERSION}.tar.gz
           tar -xzf .\perl-${PERL5_VERSION}.tar.gz
           cd perl-${PERL5_VERSION}\win32
