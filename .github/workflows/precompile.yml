@@ -46,25 +46,24 @@ jobs:
     steps:
       - name: Build Check
         id: build-check
-        shell: bash
         run: |
-          if [ "${{ github.event_name }}" = "push" ]; then
-            echo "build=true" >> $GITHUB_OUTPUT
-            export BUILD_VERSION_V="v${GITHUB_REF##*/v}"
-          else
-            if [ "${{ matrix.job.target }}" == "aarch64-windows-msvc" ]; then
-              echo "build=${{ inputs.build_aarch64 }}" >> $GITHUB_OUTPUT
-            fi
+          if ("${{ github.event_name }}" -eq "push") {
+            echo "build=true" >> $env:GITHUB_OUTPUT
+            $BUILD_VERSION_V = "v$($env:GITHUB_REF -replace '.*v', '')"
+          } else {
+            if ("${{ matrix.job.target }}" -eq "aarch64-windows-msvc") {
+              echo "build=${{ inputs.build_aarch64 }}" >> $env:GITHUB_OUTPUT
+            }
 
-            if [ "${{ matrix.job.target }}" == "x86_64-windows-msvc" ]; then
-              echo "build=${{ inputs.build_x86_64 }}" >> $GITHUB_OUTPUT
-            fi
+            if ("${{ matrix.job.target }}" -eq "x86_64-windows-msvc") {
+              echo "build=${{ inputs.build_x86_64 }}" >> $env:GITHUB_OUTPUT
+            }
 
-            export BUILD_VERSION_V="${{ inputs.perl5_verison }}"
-          fi
+            $BUILD_VERSION_V = "${{ inputs.perl5_verison }}"
+          }
 
-          export BUILD_VERSION="${BUILD_VERSION_V#v}"
-          echo "version=${BUILD_VERSION}" >> $GITHUB_OUTPUT
+          $BUILD_VERSION = $BUILD_VERSION_V -replace '^v', ''
+          echo "version=$BUILD_VERSION" >> $env:GITHUB_OUTPUT
 
       - name: Setup MSVC
         if: steps.build-check.outputs.build == 'true'
