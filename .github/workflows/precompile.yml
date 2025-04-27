@@ -88,6 +88,8 @@ jobs:
         run: |
           New-Item -ItemType Directory -Path artifacts -Force
           tar -czf ".\artifacts\perl-${{ matrix.job.arch }}-windows-msvc.tar.gz" -C c:\perl .
+          $SHA256="$((Get-FileHash -Path ".\artifacts\perl-${{ matrix.job.arch }}-windows-msvc.tar.gz" -Algorithm SHA256).Hash)  perl-${{ matrix.job.arch }}-windows-msvc.tar.gz"
+          $SHA256 | Out-File -FilePath ".\artifacts\perl-${{ matrix.job.arch }}-windows-msvc.tar.gz.sha256" -Encoding ascii
 
       - uses: softprops/action-gh-release@v1
         if: steps.build-check.outputs.build == 'true'
@@ -96,3 +98,4 @@ jobs:
           name: v${{ steps.build-check.outputs.version }}
           files: |
             artifacts/perl-*.tar.gz
+            artifacts/perl-*.tar.gz.sha256
