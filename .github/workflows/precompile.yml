@@ -1,36 +1,78 @@
 name: perl-windows
 
 on:
+  workflow_dispatch:
+    inputs:
+      perl5_verison:
+        description: 'Perl5 Version'
+        required: true
+      build_aarch64:
+        description: 'Build aarch64'
+        required: false
+        default: 'true'
+        type: choice
+        options:
+          - true
+          - false
+      build_x86_64:
+        description: 'Build x86_64'
+        required: false
+        default: 'true'
+        type: choice
+        options:
+          - true
+          - false
   push:
     tags:
         - 'v*'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ inputs.perl5_verison }}
+  cancel-in-progress: true
 
 permissions:
   contents: write
 
 jobs:
   windows:
-    runs-on: ${{ matrix.pair.runner }}
+    runs-on: ${{ matrix.job.runs-on }}
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - pair:
-              runner: self-hosted-aarch64-windows-msvc
-              arch: aarch64
-              vcvarsall: arm64
-          - pair:
-              runner: windows-2019
-              arch: x86_64
-              vcvarsall: x64
+        job:
+          - { target: aarch64-windows-msvc, runs-on: self-hosted-aarch64-windows-msvc, arch: aarch64, vcvarsall: arm64 }
+          - { target: x86_64-windows-msvc, runs-on: windows-2019, arch: x86_64, vcvarsall: x64 }
 
     steps:
+      - name: Build Check
+        id: build-check
+        run: |
+          if [ "${{ github.event_name }}" = "push" ]; then
+            echo "build=true" >> $GITHUB_OUTPUT
+            export BUILD_VERSION_V="v${GITHUB_REF##*/v}"
+          else
+            if [ "${{ matrix.job.target }}" == "aarch64-windows-msvc" ]; then
+              echo "build=${{ inputs.build_aarch64 }}" >> $GITHUB_OUTPUT
+            fi
+
+            if [ "${{ matrix.job.target }}" == "x86_64-windows-msvc" ]; then
+              echo "build=${{ inputs.build_x86_64 }}" >> $GITHUB_OUTPUT
+            fi
+
+            export BUILD_VERSION_V="${{ inputs.perl5_verison }}"
+          fi
+
+          export BUILD_VERSION="${BUILD_VERSION_V#v}"
+          echo "version=${BUILD_VERSION}" >> $GITHUB_OUTPUT
+
       - name: Setup MSVC
+        if: steps.build-check.outputs.build == 'true'
         uses: ilammy/msvc-dev-cmd@v1
         with:
-          arch: ${{ matrix.pair.vcvarsall }}
+          arch: ${{ matrix.job.vcvarsall }}
 
       - name: Compile Perl
+        if: steps.build-check.outputs.build == 'true'
         run: |
           $ref = $env:GITHUB_REF
           $PERL5_VERSION=$ref.Replace('refs/tags/v','')
@@ -42,11 +84,15 @@ jobs:
           nmake install
 
       - name: Create tarball
+        if: steps.build-check.outputs.build == 'true'
         run: |
           New-Item -ItemType Directory -Path artifacts -Force
-          tar -czf ".\artifacts\perl-${{ matrix.pair.arch }}-windows-msvc.tar.gz" -C c:\perl .
+          tar -czf ".\artifacts\perl-${{ matrix.job.arch }}-windows-msvc.tar.gz" -C c:\perl .
 
       - uses: softprops/action-gh-release@v1
+        if: steps.build-check.outputs.build == 'true'
         with:
+          tag_name: v${{ steps.build-check.outputs.version }}
+          name: v${{ steps.build-check.outputs.version }}
           files: |
             artifacts/perl-*.tar.gz
