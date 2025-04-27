@@ -1,0 +1,35 @@
+name: auto-update
+
+on:
+  workflow_dispatch:
+
+jobs:
+  auto-update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.AUTO_UPDATE_TOKEN }}
+
+      - name: Get latest version
+        id: perl5-version
+        run: |
+          pip3 install -U lastversion
+          PERL5_VERSION=$(lastversion perl5)
+          echo "tag=v${PERL5_VERSION}" >> $GITHUB_OUTPUT
+
+      - name: Check if tag exists
+        uses: mukunku/tag-exists-action@v1.6.0
+        id: check-tag
+        with: 
+          tag: ${{ steps.perl5-version.outputs.tag }}
+          repo: 'cocoa-xu/perl-windows-build'
+      
+      - name: Update if tag not exists
+        if: steps.check-tag.outputs.exists == 'false'
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git tag ${{ steps.perl5-version.outputs.tag }}
+          git push origin ${{ steps.perl5-version.outputs.tag }}
