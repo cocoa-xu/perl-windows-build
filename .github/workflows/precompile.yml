@@ -75,9 +75,9 @@ jobs:
         if: steps.build-check.outputs.build == 'true'
         run: |
           $PERL5_VERSION="${{ steps.build-check.outputs.version }}"
-          Invoke-WebRequest -Uri https://github.com/Perl/perl5/archive/refs/tags/v${PERL5_VERSION}.tar.gz -OutFile perl-${PERL5_VERSION}.tar.gz
-          tar -xzf .\perl-${PERL5_VERSION}.tar.gz
-          cd perl-${PERL5_VERSION}\win32
+          Invoke-WebRequest -Uri https://github.com/Perl/perl5/archive/refs/tags/v${PERL5_VERSION}.tar.gz -OutFile perl5-${PERL5_VERSION}.tar.gz
+          tar -xzf .\perl5-${PERL5_VERSION}.tar.gz
+          cd perl5-${PERL5_VERSION}\win32
           (Get-Content .\Makefile).Replace("#CCTYPE`t`t= MSVC143", "CCTYPE`t`t= MSVC143") |  Set-Content .\Makefile
           nmake
           nmake install
