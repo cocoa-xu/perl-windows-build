@@ -40,7 +40,7 @@ jobs:
       fail-fast: false
       matrix:
         job:
-          - { target: aarch64-windows-msvc, runs-on: self-hosted-aarch64-windows-msvc, arch: aarch64, vcvarsall: arm64 }
+          - { target: aarch64-windows-msvc, runs-on: windows-11-arm, arch: aarch64, vcvarsall: arm64 }
           - { target: x86_64-windows-msvc, runs-on: windows-2022, arch: x86_64, vcvarsall: x64 }
 
     steps:
