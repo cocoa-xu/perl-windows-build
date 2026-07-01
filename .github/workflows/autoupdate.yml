@@ -8,14 +8,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.AUTO_UPDATE_TOKEN }}
+        uses: actions/checkout@v7
 
       - name: Get latest version
         id: perl5-version
         run: |
           pip3 install -U lastversion
+          export GITHUB_API_TOKEN="${{ secrets.AUTO_UPDATE_TOKEN }}"
           PERL5_VERSION=$(lastversion perl5)
           echo "tag=v${PERL5_VERSION}" >> $GITHUB_OUTPUT
 
